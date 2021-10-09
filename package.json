@@ -1,17 +1,14 @@
 {
   "name": "play-with-back",
   "version": "1.0.0",
-  "description": "",
+  "description": "play-with-back",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon app.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ga0hyeon/play-with-back.git"
-  },
-  "author": "",
+  "repository": "git+https://github.com/ga0hyeon/play-with-back.git",
+  "author": "H90 & EH6",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/ga0hyeon/play-with-back/issues"
@@ -24,5 +21,8 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.13"
-  }
+  },
+  "keywords": [
+    "backend"
+  ]
 }
