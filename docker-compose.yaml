@@ -2,11 +2,12 @@ version: "3.1"
 
 services:
   db:
-    image: mariadb
+    image: mysql
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      - MYSQL_DATABASE=play_with_db
+      - MYSQL_ROOT_PASSWORD=root
     ports:
       - 3308:3306
 
