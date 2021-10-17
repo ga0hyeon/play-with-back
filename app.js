@@ -5,13 +5,61 @@ const express = require("express");
 const app = express();
 const db = require("./config/db");
 
-const bodyParser = require("body-parser");
+// express-session
+const session = require("express-session");
+const helmet = require("helmet");
+const assert = require("assert");
+const mySqlStore = require("express-mysql-session")(session);
+const sessionOptions = {
+  host: "localhost",
+  user: "root",
+  password: "root",
+  database: "play_with_db",
+  port: "3308",
+};
+const sessionStore = new mySqlStore(sessionOptions);
+//..세션을 외부에 저장하도록 설정
+sessionStore.on("error", function (error) {
+  assert.ifError(error);
+  assert.ok(false);
+});
+//..세션 암호화
+app.use(
+  session({
+    secret: "asdfasffdas",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { maxAge: 3600000, httpOnly: true },
+    store: sessionStore,
+    rolling: true,
+  })
+);
+//..세션 보안 설정
+app.use(
+  helmet.hsts({
+    maxAge: 10886400000,
+    includeSubDomains: true,
+  })
+);
+
+// passport - express-session 이후 기술
+const passport = require("passport");
+app.use(passport.initialize()); //passport 모듈 초기화
+app.use(passport.session()); //passport 세션 사용
+
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 
 const PORT = process.env.PORT || 8081;
 
-const options = {
+const auth = require("./lib/auth");
+
+// router
+const adminRouter = require("./routes/admins");
+const loginRouter = require("./routes/login");
+
+// Swagger
+const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
     info: {
@@ -38,7 +86,7 @@ const options = {
   apis: ["./routes/routeSwegger.js"],
 };
 
-const specs = swaggerJsdoc(options);
+const specs = swaggerJsdoc(swaggerOptions);
 app.use(
   "/api-docs",
   swaggerUi.serve,
@@ -48,12 +96,16 @@ app.use(
 app.get("/", (req, res) => res.send("Hello Play-With!!"));
 
 // APIs Start
-//admins
-app.get("/api/admins", (req, res) => {
-  db.query("SELECT * FROM admin", (err, data) => {
-    if (!err) {
-      res.send({ result: data });
-    } else res.send(err);
+app.use("/admins", adminRouter);
+app.use("/login", loginRouter);
+
+//session Debug
+app.get("/debug", (req, res) => {
+  res.json({
+    "req.session": req.session, // 세션 데이터
+    "req.user": req.user, // 유저 데이터(뒷 부분에서 설명)
+    "req._passport": req._passport, // 패스포트 데이터(뒷 부분에서 설명)
+    "req.isAuthenticated()": req.isAuthenticated(),
   });
 });
 
@@ -67,9 +119,9 @@ app.get("/api/members", (req, res) => {
     } else res.send(err);
   });
 });
-app.get("/api/member/:emailAddr", (req, res) => {
-  const query = "SELECT * FROM member WHERE email_addr= ?";
-  const params = [req.params.emailAddr];
+app.get("/api/member/:loginId", (req, res) => {
+  const query = "SELECT * FROM member WHERE login_id= ?";
+  const params = [req.params.loginId];
   db.query(query, params, (err, data) => {
     if (!err) {
       res.send({ result: data });
@@ -120,6 +172,16 @@ app.delete("/api/member/{emailAddr}", (req, res) => {
 });
 
 // APIs End
+
+// errors
+app.use(function (req, res, next) {
+  res.status(404).send("cant find resources!!");
+});
+
+app.use(function (err, req, res, next) {
+  console.log(err.stack);
+  res.status(500).send("Something broke!!");
+});
 
 // 8081 포트로 서버 오픈
 app.listen(PORT, function () {

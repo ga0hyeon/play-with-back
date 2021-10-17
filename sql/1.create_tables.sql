@@ -49,6 +49,7 @@ CREATE TABLE `interest` (
 CREATE TABLE `member` (
   `id` int NOT NULL AUTO_INCREMENT,
   `member_auth_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `login_id` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `nick_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `auth_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `profile_url` varchar(300) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
