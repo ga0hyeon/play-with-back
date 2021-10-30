@@ -41,6 +41,7 @@ router.use(
 
 // passport - express-session 이후 기술
 const passport = require("passport");
+const localStrategy = require("passport-local").Strategy;
 const naverStrategy = require("passport-naver").Strategy;
 const kakaoStrategy = require("passport-kakao").Strategy;
 
@@ -50,7 +51,7 @@ router.use(passport.session()); //passport 세션 사용
 //세션 생성시
 passport.serializeUser(function (user, done) {
   console.log("serializeUser");
-  db.query("SELECT * FROM session WHERE ");
+  //db.query("SELECT * FROM session WHERE ");
   done(null, user);
 });
 
@@ -67,13 +68,77 @@ passport.deserializeUser(function (user, done) {
 });
 
 //로그인 & 도메인별 설정
+//..local custom callback
+passport.use(
+  new localStrategy(
+    {
+      usernameField: "id",
+      passwordField: "pwd",
+    },
+    function (username, password, done) {
+      db.query(
+        "SELECT * FROM member WHERE login_id = ? AND auth_type = ?",
+        [username, password],
+        (err, data) => {
+          if (err) {
+            return done(err);
+          }
+
+          if (!data) {
+            return done(null, false, { message: "Incorrect ID." });
+          }
+
+          return done(null, data);
+        }
+      );
+    }
+  )
+);
+
+router.post("/local", function (req, res, next) {
+  passport.authenticate("local", function (err, user, info) {
+    if (err) {
+      return next(err);
+    }
+
+    if (user) {
+      //로그인 성공
+      console.log("req.user : " + req.user);
+      var json = JSON.parse(JSON.stringify(user));
+
+      //custom callback 사용시 req.login() 메서드 필수
+      req.login(user, function (err) {
+        if (err) return next(err);
+        return res.send(json);
+      });
+    } else {
+      //로그인 실패
+      console.log("/login/local fail!!");
+      res.send([]);
+    }
+  })(req, res, next);
+});
+
+router.post(
+  "/local/templete",
+  passport.authenticate("local", {
+    successRedirect: "/",
+    failureRedirect: "/login/fail",
+  }),
+  function (req, res) {
+    console.log("req.user : " + JSON.stringify(req.user));
+    console.log("/local failed, stopped");
+  }
+);
+
+//..naver
 passport.use(
   "naver",
   new naverStrategy(
     {
       clientID: "KQmu6XOsGf96uxKQqvlT",
       clientSecret: "sXdES2lky7",
-      callbackURL: "http://localhost:8081/login/naver_oauth",
+      callbackURL: "http://localhost:3000/",
     },
     function (accessToken, refreshToken, profile, done) {
       //DB 처리
@@ -142,14 +207,6 @@ router.get(
     failureRedirect: "/login/fail",
   })
 );
-
-//..로그인 확인
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.redirect("/login/fail");
-}
 
 //..로그인 실패
 router.get("/fail", (req, res) => {

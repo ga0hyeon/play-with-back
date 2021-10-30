@@ -3,7 +3,14 @@ const express = require("express");
 
 // express 는 함수이므로, 반환값을 변수에 저장한다.
 const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
 const db = require("./config/db");
+
+const cors = require("cors");
+app.use(cors());
 
 // express-session
 const session = require("express-session");
@@ -111,7 +118,7 @@ app.get("/debug", (req, res) => {
 
 //members
 //..회원 정보 조회
-app.get("/api/members", (req, res) => {
+app.get("/members", (req, res) => {
   const query = "SELECT * FROM member";
   db.query(query, (err, data) => {
     if (!err) {
@@ -119,9 +126,26 @@ app.get("/api/members", (req, res) => {
     } else res.send(err);
   });
 });
-app.get("/api/member/:loginId", (req, res) => {
-  const query = "SELECT * FROM member WHERE login_id= ?";
-  const params = [req.params.loginId];
+app.get("/member/:memberId", (req, res) => {
+  const query = "SELECT * FROM member WHERE id = ?";
+  const params = [req.params.memberId];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
+
+//..회원 정보 수정 - 관심사
+app.put("/member/:memberId", (req, res) => {
+  const query =
+    "UPDATE member SET interests=?, creation_date=SYSDATE(), created_by=?, last_update_date=SYSDATE(), last_updated_by=? WHERE id=?";
+  const params = [
+    req.body.interests,
+    req.params.memberId,
+    req.params.memberId,
+    req.params.memberId,
+  ];
   db.query(query, params, (err, data) => {
     if (!err) {
       res.send({ result: data });
@@ -130,8 +154,8 @@ app.get("/api/member/:loginId", (req, res) => {
 });
 
 //..회원 가입여부 확인
-//....token을 받아 KAKAO 또는 NAVER api로 아이디 확인하고 DB에서 결과 날림
-app.get("/api/member/:authType/:token", (req, res) => {
+//....token을 받아 KAKAO 또는 NAVER api로 아이디 확인하고 DB에서 결과 전송
+app.get("/member/:authType/:token", (req, res) => {
   const query = "SELECT * FROM member";
   db.query(query, (err, data) => {
     if (!err) {
@@ -139,7 +163,7 @@ app.get("/api/member/:authType/:token", (req, res) => {
     } else res.send(err);
   });
 });
-
+/*
 //..회원 정보 생성
 app.post("/api/member", (req, res) => {
   const query = "SELECT * FROM member";
@@ -151,18 +175,8 @@ app.post("/api/member", (req, res) => {
   });
 });
 
-//..회원 정보 수정
-app.put("/api/member/:emailAddr", (req, res) => {
-  const query = "SELECT * FROM member";
-  db.query(query, (err, data) => {
-    if (!err) {
-      res.send({ result: data });
-    } else res.send(err);
-  });
-});
-
 //..회원 정보 삭제
-app.delete("/api/member/{emailAddr}", (req, res) => {
+app.delete("/api/member/:emailAddr", (req, res) => {
   const query = "SELECT * FROM member";
   db.query(query, (err, data) => {
     if (!err) {
@@ -170,7 +184,101 @@ app.delete("/api/member/{emailAddr}", (req, res) => {
     } else res.send(err);
   });
 });
+*/
+//..북마크 생성
+app.post("/bookmark", (req, res) => {
+  const query =
+    "INSERT INTO member_bookmark (member_id, desription, contents_id, contents_type_id, creation_date, created_by, last_update_date, last_updated_by) VALUES (?, ?, ?, ?, SYSDATE(), ?, SYSDATE(), ?)";
+  const params = [
+    req.body.memberId,
+    req.body.description,
+    req.body.contentsId,
+    req.body.contentsTypeId,
+    req.body.memberId,
+    req.body.memberId,
+  ];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
 
+//..북마크 조회
+app.get("/bookmarks/:memberId", (req, res) => {
+  const query = "SELECT * FROM member_bookmark WHERE member_id = ?";
+  const params = [req.params.memberId];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
+
+//..북마크 삭제
+app.delete("/bookmark/:bookmarkId", (req, res) => {
+  const query = "DELETE FROM member_bookmark WHERE id = ?";
+  const params = [req.params.bookmarkId];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
+
+//..리뷰 생성
+app.post("/review", (req, res) => {
+  const query =
+    "INSERT INTO member_review (member_id, content_id, content_type_id, score, content, creation_date, created_by, last_update_date, last_updated_by) VALUES(?, ?, ?, ?, ?, SYSDATE(), ?, SYSDATE(), ?)";
+  const params = [
+    req.body.memberId,
+    req.body.contentId,
+    req.body.contentTypeId,
+    req.body.score,
+    req.body.content,
+    req.body.memberId,
+    req.body.memberId,
+  ];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
+
+//..리뷰 조회
+app.get("/reviews/:memberId", (req, res) => {
+  const query =
+    "SELECT id, content_id, content_type_id, score, CAST( content AS CHAR (10000) CHARACTER SET UTF8) AS content FROM member_review WHERE member_id = ?";
+  const params = [req.params.memberId];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
+
+//..리뷰 수정
+app.put("/review/:reviewId", (req, res) => {
+  const query = "UPDATE member_review SET content = ?, score = ? WHERE id = ?";
+  const params = [req.body.content, req.body.score, req.params.reviewId];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
+
+//..리뷰 삭제
+app.delete("/review/:reviewId", (req, res) => {
+  const query = "DELETE FROM member_review WHERE id = ?";
+  const params = [req.params.reviewId];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
 // APIs End
 
 // errors
