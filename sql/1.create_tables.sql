@@ -93,9 +93,10 @@ CREATE TABLE `member_bookmark` (
   `contents_id` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `contents_type_id` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `content_id` (`contents_id`,`contents_type_id`,`member_id`),
   KEY `member_bookmark_region_ibfk_1` (`member_id`),
   CONSTRAINT `member_bookmark_region_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `member` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- play_with_db.member_review definition

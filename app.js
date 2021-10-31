@@ -138,14 +138,23 @@ app.get("/member/:memberId", (req, res) => {
 
 //..회원 정보 수정 - 관심사
 app.put("/member/:memberId", (req, res) => {
-  const query =
-    "UPDATE member SET interests=?, creation_date=SYSDATE(), created_by=?, last_update_date=SYSDATE(), last_updated_by=? WHERE id=?";
-  const params = [
-    req.body.interests,
-    req.params.memberId,
-    req.params.memberId,
-    req.params.memberId,
-  ];
+  var query = "UPDATE member SET interests=?,";
+  var params = [req.body.interests];
+
+  if (typeof req.body.areaCode != "undefined") {
+    query += "area_code = ?,";
+    params.push(req.body.areaCode);
+  }
+
+  if (typeof req.body.sigunguCode != "undefined") {
+    query += "sigungu_code = ?,";
+    params.push(req.body.sigunguCode);
+  }
+
+  query += "last_update_date=SYSDATE(), last_updated_by=? WHERE id=?";
+  params.push(req.params.memberId);
+  params.push(req.params.memberId);
+
   db.query(query, params, (err, data) => {
     if (!err) {
       res.send({ result: data });
@@ -188,7 +197,7 @@ app.delete("/api/member/:emailAddr", (req, res) => {
 //..북마크 생성
 app.post("/bookmark", (req, res) => {
   const query =
-    "INSERT INTO member_bookmark (member_id, desription, contents_id, contents_type_id, creation_date, created_by, last_update_date, last_updated_by) VALUES (?, ?, ?, ?, SYSDATE(), ?, SYSDATE(), ?)";
+    "INSERT INTO member_bookmark (member_id, desription, content_id, content_type_id, creation_date, created_by, last_update_date, last_updated_by) VALUES (?, ?, ?, ?, SYSDATE(), ?, SYSDATE(), ?)";
   const params = [
     req.body.memberId,
     req.body.description,
@@ -215,10 +224,31 @@ app.get("/bookmarks/:memberId", (req, res) => {
   });
 });
 
+//..특정 북마크 조회
+app.get("/bookmark/:memberId/:contentTypeId/:contentId", (req, res) => {
+  const query =
+    "SELECT * FROM member_bookmark WHERE member_id = ? AND content_type_id = ? AND content_id = ?";
+  const params = [
+    req.params.memberId,
+    req.params.contentTypeId,
+    req.params.contentId,
+  ];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
+
 //..북마크 삭제
-app.delete("/bookmark/:bookmarkId", (req, res) => {
-  const query = "DELETE FROM member_bookmark WHERE id = ?";
-  const params = [req.params.bookmarkId];
+app.delete("/bookmark/:memberId/:contentTypeId/:contentId", (req, res) => {
+  const query =
+    "DELETE FROM member_bookmark WHERE member_id = ? AND content_type_id = ? AND content_id = ?";
+  const params = [
+    req.params.memberId,
+    req.params.contentTypeId,
+    req.params.contentId,
+  ];
   db.query(query, params, (err, data) => {
     if (!err) {
       res.send({ result: data });
@@ -260,8 +290,10 @@ app.get("/reviews/:memberId", (req, res) => {
 
 //..리뷰 수정
 app.put("/review/:reviewId", (req, res) => {
-  const query = "UPDATE member_review SET content = ?, score = ? WHERE id = ?";
+  const query =
+    "UPDATE member_review SET content = ?, score = ?, last_update_date=SYSDATE() WHERE id = ?";
   const params = [req.body.content, req.body.score, req.params.reviewId];
+
   db.query(query, params, (err, data) => {
     if (!err) {
       res.send({ result: data });
