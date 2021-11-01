@@ -171,16 +171,17 @@ app.get("/member/:authType/:memberAuthId", (req, res) => {
 //..회원 가입
 app.post("/member", (req, res) => {
   var query =
-    "INSERT INTO member (login_id, password, area_code, sigungu_code, interests, nick_name, auth_type, profile_url, email_addr, age, gender, creation_date, created_by, last_update_date, last_updated_by)";
+    "INSERT INTO member (member_auth_id, password, area_code, sigungu_code, interests, nick_name, auth_type, profile_url, email_addr, age, gender, creation_date, created_by, last_update_date, last_updated_by)";
   query +=
-    "VALUES(?, ?, ?, ?, ?, ?, 'LOCAL', ?, ?, ?, ?, SYSDATE(), 1, SYSDATE(), 1)";
+    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATE(), 1, SYSDATE(), 1)";
   const params = [
-    req.body.loginId,
+    req.body.memberAuthId,
     req.body.password,
     req.body.areaCode,
     req.body.sigunguCode,
     req.body.interests,
     req.body.nickName,
+    req.body.authType,
     req.body.profileUrl,
     req.body.emailAddr,
     req.body.age,
