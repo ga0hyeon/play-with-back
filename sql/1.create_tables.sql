@@ -33,7 +33,7 @@ CREATE TABLE `auth` (
 
 CREATE TABLE `member` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `login_id` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `login_id` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `password` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `member_auth_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `nick_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,

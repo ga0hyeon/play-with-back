@@ -171,10 +171,11 @@ app.get("/member/:authType/:memberAuthId", (req, res) => {
 //..회원 가입
 app.post("/member", (req, res) => {
   var query =
-    "INSERT INTO member (member_auth_id, password, area_code, sigungu_code, interests, nick_name, auth_type, profile_url, email_addr, age, gender, creation_date, created_by, last_update_date, last_updated_by)";
+    "INSERT INTO member (login_id, member_auth_id, password, area_code, sigungu_code, interests, nick_name, auth_type, profile_url, email_addr, age, gender, creation_date, created_by, last_update_date, last_updated_by)";
   query +=
-    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATE(), 1, SYSDATE(), 1)";
+    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATE(), 1, SYSDATE(), 1)";
   const params = [
+    req.body.loginId,
     req.body.memberAuthId,
     req.body.password,
     req.body.areaCode,
@@ -196,31 +197,31 @@ app.post("/member", (req, res) => {
 
 //..회원 정보 수정
 app.put("/member/:memberId", (req, res) => {
-  var query = "UPDATE member SET";
+  var query = "UPDATE member SET ";
   var params = [];
 
   if (typeof req.body.nickName != "undefined") {
-    query += "nick_name = ?,";
+    query += "nick_name = ?, ";
     params.push(req.body.nickName);
   }
 
   if (typeof req.body.password != "undefined") {
-    query += "password = ?,";
+    query += "password = ?, ";
     params.push(req.body.password);
   }
 
   if (typeof req.body.interests != "undefined") {
-    query += "interests = ?,";
+    query += "interests = ?, ";
     params.push(req.body.interests);
   }
 
   if (typeof req.body.areaCode != "undefined") {
-    query += "area_code = ?,";
+    query += "area_code = ?, ";
     params.push(req.body.areaCode);
   }
 
   if (typeof req.body.sigunguCode != "undefined") {
-    query += "sigungu_code = ?,";
+    query += "sigungu_code = ?, ";
     params.push(req.body.sigunguCode);
   }
 
