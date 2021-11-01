@@ -21,8 +21,8 @@ const sessionOptions = {
   host: "localhost",
   user: "root",
   password: "root",
-  database: "play_with_db",
-  port: "3308",
+  database: "mysql", //play_with_db
+  port: "3306", //3308
 };
 const sessionStore = new mySqlStore(sessionOptions);
 //..세션을 외부에 저장하도록 설정
@@ -103,6 +103,14 @@ app.use(
 app.get("/", (req, res) => res.send("Hello Play-With!!"));
 
 // APIs Start
+//Interceptor
+app.use(function (req, res, next) {
+  console.log("interceptor!!");
+  //interceptor 작동
+  next();
+});
+
+//routers
 app.use("/admins", adminRouter);
 app.use("/login", loginRouter);
 
@@ -110,8 +118,8 @@ app.use("/login", loginRouter);
 app.get("/debug", (req, res) => {
   res.json({
     "req.session": req.session, // 세션 데이터
-    "req.user": req.user, // 유저 데이터(뒷 부분에서 설명)
-    "req._passport": req._passport, // 패스포트 데이터(뒷 부분에서 설명)
+    "req.user": req.user, // 유저 데이터
+    "req._passport": req._passport, // 패스포트 데이터
     "req.isAuthenticated()": req.isAuthenticated(),
   });
 });
@@ -136,10 +144,63 @@ app.get("/member/:memberId", (req, res) => {
   });
 });
 
-//..회원 정보 수정 - 관심사
+//..회원 ID 중복 체크
+app.get("/member/loginId/:loginId", (req, res) => {
+  const query =
+    "SELECT count(login_id) AS login_id_cnt FROM member WHERE login_id = ?";
+  const params = [req.params.loginId];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
+
+//..회원 가입
+app.post("/member", (req, res) => {
+  var query =
+    "INSERT INTO member (member_auth_id, login_id, password, area_code, sigungu_code, interests, nick_name, auth_type, profile_url, email_addr, age, gender, creation_date, created_by, last_update_date, last_updated_by)";
+  query +=
+    "VALUES(?, ?, ?, ?, ?, ?, ?, 'LOCAL', ?, ?, ?, ?, SYSDATE(), 1, SYSDATE(), 1)";
+  const params = [
+    req.body.memberAuthId,
+    req.body.loginId,
+    req.body.password,
+    req.body.areaCode,
+    req.body.sigunguCode,
+    req.body.interests,
+    req.body.nickName,
+    req.body.profileUrl,
+    req.body.emailAddr,
+    req.body.age,
+    req.body.gender,
+  ];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
+
+//..회원 정보 수정
 app.put("/member/:memberId", (req, res) => {
-  var query = "UPDATE member SET interests=?,";
-  var params = [req.body.interests];
+  var query = "UPDATE member SET";
+  var params = [];
+
+  if (typeof req.body.nickName != "undefined") {
+    query += "nick_name = ?,";
+    params.push(req.body.nickName);
+  }
+
+  if (typeof req.body.password != "undefined") {
+    query += "password = ?,";
+    params.push(req.body.password);
+  }
+
+  if (typeof req.body.interests != "undefined") {
+    query += "interests = ?,";
+    params.push(req.body.interests);
+  }
 
   if (typeof req.body.areaCode != "undefined") {
     query += "area_code = ?,";
@@ -215,7 +276,8 @@ app.post("/bookmark", (req, res) => {
 
 //..북마크 조회
 app.get("/bookmarks/:memberId", (req, res) => {
-  const query = "SELECT * FROM member_bookmark WHERE member_id = ?";
+  const query =
+    "SELECT * FROM member_bookmark WHERE member_id = ? ORDER BY creation_date";
   const params = [req.params.memberId];
   db.query(query, params, (err, data) => {
     if (!err) {
@@ -279,7 +341,7 @@ app.post("/review", (req, res) => {
 //..리뷰 조회
 app.get("/reviews/:memberId", (req, res) => {
   const query =
-    "SELECT id, content_id, content_type_id, score, CAST( content AS CHAR (10000) CHARACTER SET UTF8) AS content FROM member_review WHERE member_id = ?";
+    "SELECT id, content_id, content_type_id, score, CAST( content AS CHAR (10000) CHARACTER SET UTF8) AS content FROM member_review WHERE member_id = ? ORDER BY creation_date";
   const params = [req.params.memberId];
   db.query(query, params, (err, data) => {
     if (!err) {

@@ -3,8 +3,8 @@ const db = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "root",
-  database: "play_with_db",
-  port: "3308",
+  database: "mysql", //play_with_db
+  port: "3306", //3308
 });
 
 module.exports = db;

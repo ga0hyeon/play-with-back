@@ -11,8 +11,8 @@ const sessionOptions = {
   host: "localhost",
   user: "root",
   password: "root",
-  database: "play_with_db",
-  port: "3308",
+  database: "mysql", //play_with_db
+  port: "3306", //3308
 };
 const sessionStore = new mySqlStore(sessionOptions);
 //..세션을 외부에 저장하도록 설정
@@ -50,21 +50,17 @@ router.use(passport.session()); //passport 세션 사용
 
 //세션 생성시
 passport.serializeUser(function (user, done) {
-  console.log("serializeUser");
+  console.log("serializeUser", session.Cookie.authenticate);
   //db.query("SELECT * FROM session WHERE ");
   done(null, user);
 });
 
 //세션 생성후 접근시
 passport.deserializeUser(function (user, done) {
-  console.log("deserializeUser");
-  db.query(
-    "SELECT * FROM member WHERE login_id = ? AND auth_type = ?",
-    [user.id, user.authType],
-    (err, data) => {
-      done(null, data[0]);
-    }
-  );
+  db.query("SELECT * FROM member WHERE id = ?", [user[0].id], (err, data) => {
+    if (data) done(null, data[0]);
+    else done(null, { error: "fail deserialize" });
+  });
 });
 
 //로그인 & 도메인별 설정
@@ -77,10 +73,11 @@ passport.use(
     },
     function (username, password, done) {
       db.query(
-        "SELECT * FROM member WHERE login_id = ? AND auth_type = ?",
+        "SELECT * FROM member WHERE login_id = ? AND password = ?",
         [username, password],
         (err, data) => {
           if (err) {
+            console.log("err!!!");
             return done(err);
           }
 
@@ -88,6 +85,7 @@ passport.use(
             return done(null, false, { message: "Incorrect ID." });
           }
 
+          console.log("no err");
           return done(null, data);
         }
       );
@@ -103,7 +101,6 @@ router.post("/local", function (req, res, next) {
 
     if (user) {
       //로그인 성공
-      console.log("req.user : " + req.user);
       var json = JSON.parse(JSON.stringify(user));
 
       //custom callback 사용시 req.login() 메서드 필수
