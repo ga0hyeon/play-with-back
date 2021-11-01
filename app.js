@@ -21,8 +21,10 @@ const sessionOptions = {
   host: "localhost",
   user: "root",
   password: "root",
-  database: "mysql", //play_with_db
-  port: "3306", //3308
+  //database: "play_with_db",
+  //port: "3308",
+  database: "mysql",
+  port: "3306",
 };
 const sessionStore = new mySqlStore(sessionOptions);
 //..세션을 외부에 저장하도록 설정
@@ -146,9 +148,19 @@ app.get("/member/:memberId", (req, res) => {
 
 //..회원 ID 중복 체크
 app.get("/member/loginId/:loginId", (req, res) => {
-  const query =
-    "SELECT count(login_id) AS login_id_cnt FROM member WHERE login_id = ?";
+  const query = "SELECT * FROM member WHERE login_id = ?";
   const params = [req.params.loginId];
+  db.query(query, params, (err, data) => {
+    if (!err) {
+      res.send({ result: data });
+    } else res.send(err);
+  });
+});
+
+app.get("/member/:authType/:memberAuthId", (req, res) => {
+  const query =
+    "SELECT * FROM member WHERE auth_type = ? AND member_auth_id = ?";
+  const params = [req.params.authType, req.params.memberAuthId];
   db.query(query, params, (err, data) => {
     if (!err) {
       res.send({ result: data });
@@ -159,11 +171,10 @@ app.get("/member/loginId/:loginId", (req, res) => {
 //..회원 가입
 app.post("/member", (req, res) => {
   var query =
-    "INSERT INTO member (member_auth_id, login_id, password, area_code, sigungu_code, interests, nick_name, auth_type, profile_url, email_addr, age, gender, creation_date, created_by, last_update_date, last_updated_by)";
+    "INSERT INTO member (login_id, password, area_code, sigungu_code, interests, nick_name, auth_type, profile_url, email_addr, age, gender, creation_date, created_by, last_update_date, last_updated_by)";
   query +=
-    "VALUES(?, ?, ?, ?, ?, ?, ?, 'LOCAL', ?, ?, ?, ?, SYSDATE(), 1, SYSDATE(), 1)";
+    "VALUES(?, ?, ?, ?, ?, ?, 'LOCAL', ?, ?, ?, ?, SYSDATE(), 1, SYSDATE(), 1)";
   const params = [
-    req.body.memberAuthId,
     req.body.loginId,
     req.body.password,
     req.body.areaCode,
